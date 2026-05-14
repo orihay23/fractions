@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Math Problem Generator</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; min-height: 100vh; }
+
+  header { background: #1e293b; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #334155; }
+  header h1 { font-size: 1.4rem; font-weight: 700; color: #38bdf8; }
+
+  .level-controls { display: flex; align-items: center; gap: 12px; }
+  .level-controls span { font-size: 0.85rem; color: #94a3b8; }
+  .level-display { font-weight: 700; color: #f0abfc; font-size: 1.1rem; min-width: 2rem; text-align: center; }
+  .btn-round { background: #334155; border: none; color: #e2e8f0; width: 32px; height: 32px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.15s; }
+  .btn-round:hover { background: #475569; }
+
+  .topics { display: flex; flex-wrap: wrap; gap: 8px; padding: 16px 24px; background: #1e293b; border-bottom: 1px solid #334155; }
+  .topic-btn { padding: 6px 14px; border-radius: 20px; border: 1.5px solid #334155; background: transparent; color: #94a3b8; font-size: 0.8rem; cursor: pointer; transition: all 0.15s; }
+  .topic-btn:hover { border-color: #38bdf8; color: #38bdf8; }
+  .topic-btn.active { background: #38bdf8; border-color: #38bdf8; color: #0f172a; font-weight: 600; }
+
+  .main { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 24px; min-height: calc(100vh - 120px); }
+
+  .card { background: #1e293b; border: 1px solid #334155; border-radius: 16px; padding: 40px; max-width: 600px; width: 100%; text-align: center; box-shadow: 0 4px 32px rgba(0,0,0,0.4); }
+
+  .topic-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: #64748b; margin-bottom: 12px; }
+  .problem { font-size: 2rem; font-weight: 700; color: #f1f5f9; margin-bottom: 8px; min-height: 3rem; line-height: 1.2; }
+  .problem-hint { font-size: 0.85rem; color: #64748b; margin-bottom: 28px; min-height: 1.2rem; }
+
+  .answer-row { display: flex; gap: 10px; justify-content: center; align-items: center; margin-bottom: 20px; }
+  .answer-input { background: #0f172a; border: 2px solid #334155; border-radius: 10px; color: #f1f5f9; font-size: 1.3rem; padding: 12px 20px; width: 240px; text-align: center; outline: none; transition: border-color 0.15s; }
+  .answer-input:focus { border-color: #38bdf8; }
+  .answer-input.correct { border-color: #22c55e; background: #052e16; }
+  .answer-input.wrong { border-color: #ef4444; background: #2d0a0a; }
+
+  .btn-submit { background: #38bdf8; color: #0f172a; border: none; border-radius: 10px; padding: 12px 28px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: background 0.15s; }
+  .btn-submit:hover { background: #7dd3fc; }
+  .btn-submit:disabled { opacity: 0.4; cursor: default; }
+
+  .feedback { font-size: 1rem; font-weight: 600; min-height: 1.4rem; margin-bottom: 16px; }
+  .feedback.correct { color: #22c55e; }
+  .feedback.wrong { color: #ef4444; }
+
+  .btn-next { background: transparent; border: 1.5px solid #334155; color: #94a3b8; border-radius: 10px; padding: 10px 24px; font-size: 0.9rem; cursor: pointer; transition: all 0.15s; }
+  .btn-next:hover { border-color: #38bdf8; color: #38bdf8; }
+
+  .score-bar { display: flex; gap: 24px; justify-content: center; margin-top: 24px; font-size: 0.85rem; color: #64748b; }
+  .score-bar span { color: #e2e8f0; font-weight: 600; }
+
+  .katex-display { margin: 0; }
+
+  .no-topic { text-align: center; color: #64748b; font-size: 1.1rem; margin: 40px; }
+</style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+</head>
+<body>
+
+<header>
+  <h1>Math Problems</h1>
+  <div class="level-controls">
+    <span>Level</span>
+    <button class="btn-round" id="levelDown">−</button>
+    <div class="level-display" id="levelDisplay">3</div>
+    <button class="btn-round" id="levelUp">+</button>
+  </div>
+</header>
+
+<div class="topics" id="topicsBar"></div>
+
+<div class="main">
+  <div class="card" id="card">
+    <div class="topic-label" id="topicLabel"></div>
+    <div class="problem" id="problemText"></div>
+    <div class="problem-hint" id="problemHint"></div>
+    <div class="answer-row">
+      <input class="answer-input" id="answerInput" type="text" placeholder="Your answer" autocomplete="off" />
+      <button class="btn-submit" id="submitBtn">Check</button>
+    </div>
+    <div class="feedback" id="feedback"></div>
+    <button class="btn-next" id="nextBtn">Next Problem →</button>
+    <div class="score-bar">
+      Correct: <span id="scoreCorrect">0</span> &nbsp; Wrong: <span id="scoreWrong">0</span> &nbsp; Streak: <span id="scoreStreak">0</span>
+    </div>
+  </div>
+</div>
+
+<script>
+const TOPICS = [
+  { id: 'addition',        label: 'Addition' },
+  { id: 'multiplication',  label: 'Multiplication' },
+  { id: 'division',        label: 'Division' },
+  { id: 'fractions',       label: 'Fractions' },
+  { id: 'percentages',     label: 'Percentages' },
+  { id: 'algebra',         label: 'Algebra' },
+  { id: 'geometry',        label: 'Geometry' },
+  { id: 'trigonometry',    label: 'Trigonometry' },
+  { id: 'calculus',        label: 'Calculus' },
+  { id: 'diffeq',          label: 'Diff. Equations' },
+  { id: 'linalg',          label: 'Lin. Algebra' },
+  { id: 'abstractalg',     label: 'Abstract Algebra' },
+  { id: 'probability',     label: 'Probability & Stats' },
+];
+
+let level = 3;
+let activeTopic = 'addition';
+let correct = 0, wrong = 0, streak = 0;
+let currentProblem = null;
+let answered = false;
+
+// ── Utility ──────────────────────────────────────────────────────────────────
+const rand = (a, b) => Math.floor(Math.random() * (b - a + 1)) + a;
+const choose = arr => arr[rand(0, arr.length - 1)];
+const gcd = (a, b) => b === 0 ? a : gcd(b, a % b);
+
+function simplifyFrac(n, d) {
+  const g = gcd(Math.abs(n), Math.abs(d));
+  return [n / g, d / g];
+}
+
+function fracStr(n, d) {
+  if (d === 1) return String(n);
+  return `\\frac{${n}}{${d}}`;
+}
+
+// ── Problem generators ───────────────────────────────────────────────────────
+const generators = {
+
+  addition(lvl) {
+    const scale = Math.pow(10, Math.min(lvl - 1, 4));
+    const a = rand(1, 9) * scale;
+    const b = rand(1, 9) * scale;
+    if (lvl <= 2) {
+      // simple
+      return { display: `${a} + ${b} = ?`, hint: '', answer: String(a + b), check: exact };
+    }
+    if (lvl <= 5) {
+      const neg = lvl >= 4 ? (Math.random() > 0.5 ? -1 : 1) : 1;
+      const bb = b * neg;
+      return { display: `${a} + (${bb}) = ?`, hint: '', answer: String(a + bb), check: exact };
+    }
+    // large or decimal
+    const d = parseFloat((Math.random() * 1000).toFixed(2));
+    const e = parseFloat((Math.random() * 1000).toFixed(2));
+    return { display: `${d} + ${e} = ?`, hint: 'Round to 2 decimal places', answer: String(Math.round((d + e) * 100) / 100), check: exact };
+  },
+
+  multiplication(lvl) {
+    const maxA = [2, 5, 12, 20, 50, 100, 500, 1000, 5000, 10000][Math.min(lvl - 1, 9)];
+    const a = rand(2, maxA);
+    const b = rand(2, maxA);
+    if (lvl >= 7) {
+      const d = parseFloat((Math.random() * 100).toFixed(1));
+      const e = parseFloat((Math.random() * 100).toFixed(1));
+      return { display: `${d} \\times ${e} = ?`, hint: 'Round to 2 decimal places', answer: String(Math.round(d * e * 100) / 100), check: exact };
+    }
+    return { display: `${a} \\times ${b} = ?`, hint: '', answer: String(a * b), check: exact };
+  },
+
+  division(lvl) {
+    const maxQ = [5, 10, 12, 20, 50, 100, 200, 500, 1000, 2000][Math.min(lvl - 1, 9)];
+    const b = rand(2, maxQ);
+    const ans = rand(1, maxQ);
+    const a = b * ans;
+    if (lvl >= 6) {
+      // non-integer result
+      const nn = rand(1, 99);
+      const dd = rand(2, 20);
+      const res = Math.round(nn / dd * 100) / 100;
+      return { display: `${nn} \\div ${dd} = ?`, hint: 'Round to 2 decimal places', answer: String(res), check: approx(0.01) };
+    }
+    return { display: `${a} \\div ${b} = ?`, hint: '', answer: String(ans), check: exact };
+  },
+
+  fractions(lvl) {
+    if (lvl <= 2) {
+      const d = rand(2, 8);
+      const n1 = rand(1, d - 1);
+      const n2 = rand(1, d - 1 - n1 + 1 > 0 ? d - 1 - n1 : 1);
+      const sum = n1 + n2;
+      const [sn, sd] = simplifyFrac(sum, d);
+      return { display: `${fracStr(n1, d)} + ${fracStr(n2, d)} = ?`, hint: 'Simplify if possible', answer: fracStr(sn, sd), check: fracCheck };
+    }
+    if (lvl <= 5) {
+      const d1 = rand(2, 8), d2 = rand(2, 8);
+      const n1 = rand(1, d1), n2 = rand(1, d2);
+      const sumN = n1 * d2 + n2 * d1, sumD = d1 * d2;
+      const [sn, sd] = simplifyFrac(sumN, sumD);
+      const ops = ['+', '-', '\\times'];
+      const op = choose(lvl <= 3 ? ['+', '-'] : ops);
+      let rn, rd;
+      if (op === '+') { rn = n1 * d2 + n2 * d1; rd = d1 * d2; }
+      else if (op === '-') { rn = n1 * d2 - n2 * d1; rd = d1 * d2; }
+      else { rn = n1 * n2; rd = d1 * d2; }
+      const [fn, fd] = simplifyFrac(rn, rd);
+      return { display: `${fracStr(n1, d1)} ${op} ${fracStr(n2, d2)} = ?`, hint: 'Simplify', answer: fracStr(fn, fd), check: fracCheck };
+    }
+    // division, mixed numbers
+    const d1 = rand(2, 12), d2 = rand(2, 12);
+    const n1 = rand(1, d1), n2 = rand(1, d2);
+    const rn = n1 * d2, rd = n2 * d1;
+    const [fn, fd] = simplifyFrac(rn, rd);
+    return { display: `${fracStr(n1, d1)} \\div ${fracStr(n2, d2)} = ?`, hint: 'Simplify', answer: fracStr(fn, fd), check: fracCheck };
+  },
+
+  percentages(lvl) {
+    if (lvl <= 3) {
+      const pcts = [10, 20, 25, 50, 75, 5, 15];
+      const p = choose(pcts);
+      const base = rand(1, 20) * (lvl <= 2 ? 10 : 5);
+      const ans = Math.round(p / 100 * base * 100) / 100;
+      return { display: `${p}\\% \\text{ of } ${base} = ?`, hint: '', answer: String(ans), check: approx(0.01) };
+    }
+    if (lvl <= 6) {
+      const p = rand(1, 99);
+      const base = rand(10, 500);
+      const ans = Math.round(p / 100 * base * 100) / 100;
+      return { display: `${p}\\% \\text{ of } ${base} = ?`, hint: 'Round to 2 decimal places', answer: String(ans), check: approx(0.01) };
+    }
+    // reverse percentage
+    const p = rand(5, 95);
+    const result = rand(10, 500);
+    const base = Math.round(result / (p / 100) * 100) / 100;
+    return { display: `${result} \\text{ is } ${p}\\% \\text{ of what?}`, hint: 'Round to 2 decimal places', answer: String(base), check: approx(0.5) };
+  },
+
+  algebra(lvl) {
+    if (lvl <= 2) {
+      const b = rand(1, 10), c = rand(1, 20);
+      return { display: `x + ${b} = ${c}`, hint: 'Solve for x', answer: String(c - b), check: exact };
+    }
+    if (lvl <= 4) {
+      const a = rand(2, 9), b = rand(1, 20);
+      return { display: `${a}x = ${a * b}`, hint: 'Solve for x', answer: String(b), check: exact };
+    }
+    if (lvl <= 6) {
+      const a = rand(2, 9), b = rand(1, 9), c = rand(1, 30);
+      const ans = (c - b * (a > 5 ? 2 : 1));
+      const rhs = a * rand(1,5) + b;
+      const x = rand(1, 10);
+      return { display: `${a}x + ${b} = ${a * x + b}`, hint: 'Solve for x', answer: String(x), check: exact };
+    }
+    if (lvl <= 8) {
+      // quadratic x^2 + bx + c = 0
+      const r1 = rand(-9, 9), r2 = rand(-9, 9);
+      const b = -(r1 + r2), c = r1 * r2;
+      const bStr = b >= 0 ? `+${b}` : `${b}`;
+      const cStr = c >= 0 ? `+${c}` : `${c}`;
+      const roots = [r1, r2].sort((a,b)=>a-b);
+      return { display: `x^2 ${bStr}x ${cStr} = 0`, hint: 'Enter roots separated by comma, e.g. -3,5', answer: roots.join(','), check: rootsCheck };
+    }
+    // systems
+    const x = rand(1, 9), y = rand(1, 9);
+    const a1 = rand(1, 5), b1 = rand(1, 5);
+    const a2 = rand(1, 5), b2 = rand(1, 5);
+    return {
+      display: `\\begin{cases} ${a1}x + ${b1}y = ${a1*x+b1*y} \\\\ ${a2}x + ${b2}y = ${a2*x+b2*y} \\end{cases}`,
+      hint: 'Enter x,y e.g. 3,2',
+      answer: `${x},${y}`,
+      check: pairCheck
+    };
+  },
+
+  geometry(lvl) {
+    const shapes = ['circle', 'rectangle', 'triangle', 'trapezoid', 'cylinder', 'sphere', 'cone'];
+    if (lvl <= 2) {
+      const s = rand(1, 20);
+      return { display: `Area of square with side ${s}?`, hint: '', answer: String(s * s), check: exact };
+    }
+    if (lvl <= 4) {
+      const r = rand(1, 20);
+      const area = Math.round(Math.PI * r * r * 100) / 100;
+      return { display: `Area of circle with radius ${r}?`, hint: 'Use π ≈ 3.14159, round to 2 decimal places', answer: String(area), check: approx(0.5) };
+    }
+    if (lvl <= 6) {
+      const a = rand(3, 20), b = rand(3, 20), c = rand(3, 20);
+      const s = (a + b + c) / 2;
+      const area = Math.round(Math.sqrt(s * (s-a) * (s-b) * (s-c)) * 100) / 100;
+      return { display: `Area of triangle with sides ${a}, ${b}, ${c}?`, hint: "Heron's formula, round to 2 decimal places", answer: String(area), check: approx(0.5) };
+    }
+    if (lvl <= 8) {
+      const r = rand(1, 10), h = rand(1, 20);
+      const vol = Math.round(Math.PI * r * r * h * 100) / 100;
+      return { display: `Volume of cylinder with radius ${r} and height ${h}?`, hint: 'Round to 2 decimal places', answer: String(vol), check: approx(1) };
+    }
+    const r = rand(1, 15);
+    const vol = Math.round(4/3 * Math.PI * r**3 * 100) / 100;
+    return { display: `Volume of sphere with radius ${r}?`, hint: 'Round to 2 decimal places', answer: String(vol), check: approx(2) };
+  },
+
+  trigonometry(lvl) {
+    const angles = [0, 30, 45, 60, 90, 120, 135, 150, 180];
+    const fns = ['sin', 'cos', 'tan'];
+    if (lvl <= 3) {
+      const angle = choose([0, 30, 45, 60, 90]);
+      const fn = choose(['sin', 'cos']);
+      const rad = angle * Math.PI / 180;
+      const val = Math.round((fn === 'sin' ? Math.sin(rad) : Math.cos(rad)) * 1000) / 1000;
+      return { display: `\\${fn}(${angle}°) = ?`, hint: 'Round to 3 decimal places', answer: String(val), check: approx(0.002) };
+    }
+    if (lvl <= 5) {
+      const angle = choose(angles);
+      const fn = choose(fns);
+      const rad = angle * Math.PI / 180;
+      let val;
+      if (fn === 'sin') val = Math.sin(rad);
+      else if (fn === 'cos') val = Math.cos(rad);
+      else val = Math.tan(rad);
+      if (!isFinite(val)) return generators.trigonometry(lvl);
+      val = Math.round(val * 1000) / 1000;
+      return { display: `\\${fn}(${angle}°) = ?`, hint: 'Round to 3 decimal places', answer: String(val), check: approx(0.002) };
+    }
+    if (lvl <= 7) {
+      // law of cosines
+      const a = rand(3, 15), b = rand(3, 15), C = rand(30, 120);
+      const cSq = a*a + b*b - 2*a*b*Math.cos(C * Math.PI / 180);
+      const c = Math.round(Math.sqrt(cSq) * 100) / 100;
+      return { display: `Triangle: a=${a}, b=${b}, C=${C}°. Find side c.`, hint: 'Law of cosines, round to 2 decimal places', answer: String(c), check: approx(0.1) };
+    }
+    // inverse trig
+    const vals = [0, 0.5, Math.sqrt(2)/2, Math.sqrt(3)/2, 1];
+    const v = choose(vals);
+    const deg = Math.round(Math.asin(v) * 180 / Math.PI);
+    return { display: `\\arcsin(${Math.round(v * 1000) / 1000}) = ?°`, hint: 'Answer in degrees', answer: String(deg), check: approx(0.5) };
+  },
+
+  calculus(lvl) {
+    if (lvl <= 2) {
+      const n = rand(2, 6);
+      return { display: `\\frac{d}{dx}[x^{${n}}] = ?`, hint: 'Power rule: write as ax^n e.g. 3x^2', answer: `${n}x^${n-1}`, check: polyCheck };
+    }
+    if (lvl <= 4) {
+      const a = rand(1, 8), n = rand(2, 6);
+      return { display: `\\frac{d}{dx}[${a}x^{${n}}] = ?`, hint: 'Power rule', answer: `${a*n}x^${n-1}`, check: polyCheck };
+    }
+    if (lvl <= 6) {
+      const fns = [
+        { display: '\\sin(x)', deriv: '\\cos(x)', check: latexCheck('\\cos(x)') },
+        { display: '\\cos(x)', deriv: '-\\sin(x)', check: latexCheck('-\\sin(x)') },
+        { display: 'e^x', deriv: 'e^x', check: latexCheck('e^x') },
+        { display: '\\ln(x)', deriv: '\\frac{1}{x}', check: latexCheck('\\frac{1}{x}') },
+      ];
+      const f = choose(fns);
+      return { display: `\\frac{d}{dx}[${f.display}] = ?`, hint: 'Standard derivative', answer: f.deriv, check: f.check };
+    }
+    if (lvl <= 8) {
+      const n = rand(2, 7);
+      const ans = Math.round(1/(n+1) * 100) / 100;
+      return {
+        display: `\\int_0^1 x^{${n}} \\, dx = ?`,
+        hint: 'Definite integral, express as fraction e.g. 1/8',
+        answer: `1/${n+1}`,
+        check: fracCheck
+      };
+    }
+    return {
+      display: `\\lim_{x \\to 0} \\frac{\\sin(x)}{x} = ?`,
+      hint: 'Famous limit',
+      answer: '1',
+      check: exact
+    };
+  },
+
+  diffeq(lvl) {
+    if (lvl <= 3) {
+      const k = rand(2, 9);
+      return {
+        display: `y' = ${k}y, \\; y(0)=1. \\; \\text{Find } y(x).`,
+        hint: `General solution form: Ae^{kx}`,
+        answer: `e^{${k}x}`,
+        check: latexCheck(`e^{${k}x}`)
+      };
+    }
+    if (lvl <= 6) {
+      const k = rand(1, 6);
+      return {
+        display: `y'' + ${k*k}y = 0`,
+        hint: `General solution: y = A\\cos(${k}x) + B\\sin(${k}x)`,
+        answer: `A\\cos(${k}x)+B\\sin(${k}x)`,
+        check: containsCheck([`cos(${k}x)`, `sin(${k}x)`])
+      };
+    }
+    return {
+      display: `y' - y = e^x, \\; y(0)=0`,
+      hint: 'Integrating factor method; enter y(x)',
+      answer: `xe^x`,
+      check: latexCheck('xe^x')
+    };
+  },
+
+  linalg(lvl) {
+    if (lvl <= 3) {
+      const a = [[rand(1,5), rand(1,5)], [rand(1,5), rand(1,5)]];
+      const b = [[rand(1,5), rand(1,5)], [rand(1,5), rand(1,5)]];
+      const c = [
+        [a[0][0]+b[0][0], a[0][1]+b[0][1]],
+        [a[1][0]+b[1][0], a[1][1]+b[1][1]]
+      ];
+      return {
+        display: `\\begin{pmatrix}${a[0][0]}&${a[0][1]}\\\\${a[1][0]}&${a[1][1]}\\end{pmatrix}+\\begin{pmatrix}${b[0][0]}&${b[0][1]}\\\\${b[1][0]}&${b[1][1]}\\end{pmatrix}`,
+        hint: 'Enter 4 values: top-left, top-right, bottom-left, bottom-right separated by commas',
+        answer: `${c[0][0]},${c[0][1]},${c[1][0]},${c[1][1]}`,
+        check: commaListCheck
+      };
+    }
+    if (lvl <= 6) {
+      const a = rand(1,5), b = rand(1,5), c = rand(1,5), d = rand(1,5);
+      const det = a*d - b*c;
+      return {
+        display: `\\det\\begin{pmatrix}${a}&${b}\\\\${c}&${d}\\end{pmatrix} = ?`,
+        hint: 'ad - bc',
+        answer: String(det),
+        check: exact
+      };
+    }
+    if (lvl <= 8) {
+      // 3x3 determinant
+      const m = Array.from({length:3}, () => [rand(-5,5),rand(-5,5),rand(-5,5)]);
+      const det = m[0][0]*(m[1][1]*m[2][2]-m[1][2]*m[2][1])
+                - m[0][1]*(m[1][0]*m[2][2]-m[1][2]*m[2][0])
+                + m[0][2]*(m[1][0]*m[2][1]-m[1][1]*m[2][0]);
+      const rows = m.map(r=>r.join('&')).join('\\\\');
+      return {
+        display: `\\det\\begin{pmatrix}${rows}\\end{pmatrix} = ?`,
+        hint: 'Cofactor expansion',
+        answer: String(det),
+        check: exact
+      };
+    }
+    // eigenvalue of 2x2
+    const a2=rand(1,5), d2=rand(1,5), off=rand(1,4);
+    const tr=a2+d2, detM=a2*d2-off*off;
+    const disc=tr*tr-4*detM;
+    if (disc < 0) return generators.linalg(lvl);
+    const e1=Math.round(((tr+Math.sqrt(disc))/2)*100)/100;
+    const e2=Math.round(((tr-Math.sqrt(disc))/2)*100)/100;
+    const eigs=[e1,e2].sort((a,b)=>a-b);
+    return {
+      display: `\\text{Eigenvalues of }\\begin{pmatrix}${a2}&${off}\\\\${off}&${d2}\\end{pmatrix}?`,
+      hint: 'Enter two values separated by comma, smaller first',
+      answer: `${eigs[0]},${eigs[1]}`,
+      check: approxPairCheck(0.1)
+    };
+  },
+
+  abstractalg(lvl) {
+    if (lvl <= 3) {
+      const n = choose([4, 6, 8, 10, 12]);
+      return {
+        display: `|\\mathbb{Z}_{${n}}| = ?`,
+        hint: 'Order of the cyclic group',
+        answer: String(n),
+        check: exact
+      };
+    }
+    if (lvl <= 5) {
+      const n = choose([6, 8, 10, 12]);
+      return {
+        display: `\\text{How many elements of order 2 does } \\mathbb{Z}_{${n}} \\text{ have?}`,
+        hint: 'Count elements x where 2x ≡ 0 (mod n), x ≠ 0',
+        answer: n % 2 === 0 ? '1' : '0',
+        check: exact
+      };
+    }
+    if (lvl <= 7) {
+      const primes = [2,3,5,7,11,13,17,19,23];
+      const p = choose(primes);
+      return {
+        display: `\\phi(${p}) = ?`,
+        hint: "Euler's totient function",
+        answer: String(p - 1),
+        check: exact
+      };
+    }
+    const p = choose([2,3,5,7,11,13]);
+    const q = choose([2,3,5,7,11,13].filter(x=>x!==p));
+    const n = p * q;
+    return {
+      display: `\\phi(${n}) = ?`,
+      hint: "φ(pq) = (p−1)(q−1)",
+      answer: String((p-1)*(q-1)),
+      check: exact
+    };
+  },
+
+  probability(lvl) {
+    if (lvl <= 2) {
+      const total = rand(5, 20);
+      const fav = rand(1, total - 1);
+      const [fn, fd] = simplifyFrac(fav, total);
+      return {
+        display: `A bag has ${fav} red and ${total - fav} blue balls. P(red) = ?`,
+        hint: 'Express as simplified fraction',
+        answer: fracStr(fn, fd),
+        check: fracCheck
+      };
+    }
+    if (lvl <= 4) {
+      const n = rand(10, 52), k = rand(1, Math.min(n, 5));
+      const ways = comb(n, k);
+      return {
+        display: `C(${n},${k}) = ?`,
+        hint: `Combinations: \\binom{n}{k}`,
+        answer: String(ways),
+        check: exact
+      };
+    }
+    if (lvl <= 6) {
+      const p = Math.round(rand(1,9) * 10) / 100;
+      const n = rand(3, 8), k = rand(1, n-1);
+      const prob = Math.round(comb(n,k) * Math.pow(p, k) * Math.pow(1-p, n-k) * 10000) / 10000;
+      return {
+        display: `B(${n},${p}): P(X=${k}) = ?`,
+        hint: 'Binomial probability, round to 4 decimal places',
+        answer: String(prob),
+        check: approx(0.001)
+      };
+    }
+    if (lvl <= 8) {
+      // Normal distribution z-score
+      const mu = rand(50, 100), sigma = rand(5, 20), x = mu + choose([-2,-1,0,1,2]) * sigma;
+      const z = (x - mu) / sigma;
+      return {
+        display: `X \\sim N(${mu}, ${sigma}^2). \\; z\\text{-score for } x=${x}?`,
+        hint: 'z = (x − μ) / σ',
+        answer: String(z),
+        check: approx(0.01)
+      };
+    }
+    // Bayes
+    const pA = Math.round(rand(10,70)) / 100;
+    const pBA = Math.round(rand(50,95)) / 100;
+    const pBnA = Math.round(rand(5,40)) / 100;
+    const pB = pA * pBA + (1 - pA) * pBnA;
+    const pAB = Math.round(pA * pBA / pB * 10000) / 10000;
+    return {
+      display: `P(A)=${pA}, P(B|A)=${pBA}, P(B|\\bar{A})=${pBnA}. \\; P(A|B)=?`,
+      hint: "Bayes' theorem, round to 4 decimal places",
+      answer: String(pAB),
+      check: approx(0.002)
+    };
+  }
+};
+
+function comb(n, k) {
+  if (k > n) return 0;
+  if (k === 0 || k === n) return 1;
+  let r = 1;
+  for (let i = 0; i < k; i++) r = r * (n - i) / (i + 1);
+  return Math.round(r);
+}
+
+// ── Checkers ─────────────────────────────────────────────────────────────────
+function exact(userAns, correctAns) {
+  return userAns.trim() === correctAns.trim();
+}
+
+function approx(tol) {
+  return (u, c) => Math.abs(parseFloat(u) - parseFloat(c)) <= tol;
+}
+
+function approxPairCheck(tol) {
+  return (u, c) => {
+    const uv = u.split(',').map(Number);
+    const cv = c.split(',').map(Number);
+    if (uv.length !== 2 || cv.length !== 2) return false;
+    const sorted_u = uv.sort((a,b)=>a-b);
+    const sorted_c = cv.sort((a,b)=>a-b);
+    return Math.abs(sorted_u[0]-sorted_c[0]) <= tol && Math.abs(sorted_u[1]-sorted_c[1]) <= tol;
+  };
+}
+
+function fracCheck(u, c) {
+  // parse a/b or integer
+  function parseFrac(s) {
+    s = s.replace(/\\frac\{(\-?\d+)\}\{(\d+)\}/,'$1/$2').trim();
+    if (s.includes('/')) {
+      const [n,d] = s.split('/').map(Number);
+      return [n, d];
+    }
+    return [Number(s), 1];
+  }
+  const [un, ud] = parseFrac(u);
+  const [cn, cd] = parseFrac(c);
+  return un * cd === cn * ud;
+}
+
+function rootsCheck(u, c) {
+  const uv = u.split(',').map(Number).sort((a,b)=>a-b);
+  const cv = c.split(',').map(Number).sort((a,b)=>a-b);
+  return uv.length === 2 && Math.abs(uv[0]-cv[0]) < 0.01 && Math.abs(uv[1]-cv[1]) < 0.01;
+}
+
+function pairCheck(u, c) {
+  return u.trim() === c.trim();
+}
+
+function polyCheck(u, c) {
+  // normalize e.g. "3x^1" = "3x", case-insensitive spaces stripped
+  function norm(s) { return s.replace(/\s/g,'').replace(/\^1$/,'').toLowerCase(); }
+  return norm(u) === norm(c);
+}
+
+function latexCheck(expected) {
+  return (u) => {
+    function norm(s) { return s.replace(/\s/g,'').replace(/\\/g,'').toLowerCase(); }
+    return norm(u) === norm(expected);
+  };
+}
+
+function containsCheck(parts) {
+  return (u) => parts.every(p => u.includes(p));
+}
+
+function commaListCheck(u, c) {
+  const uv = u.split(',').map(s=>s.trim());
+  const cv = c.split(',').map(s=>s.trim());
+  return uv.length === cv.length && uv.every((v,i) => v === cv[i]);
+}
+
+// ── UI ────────────────────────────────────────────────────────────────────────
+const topicsBar = document.getElementById('topicsBar');
+TOPICS.forEach(t => {
+  const btn = document.createElement('button');
+  btn.className = 'topic-btn' + (t.id === activeTopic ? ' active' : '');
+  btn.textContent = t.label;
+  btn.dataset.id = t.id;
+  btn.addEventListener('click', () => {
+    activeTopic = t.id;
+    document.querySelectorAll('.topic-btn').forEach(b => b.classList.toggle('active', b.dataset.id === t.id));
+    loadProblem();
+  });
+  topicsBar.appendChild(btn);
+});
+
+document.getElementById('levelUp').addEventListener('click', () => {
+  if (level < 10) { level++; updateLevel(); loadProblem(); }
+});
+document.getElementById('levelDown').addEventListener('click', () => {
+  if (level > 1) { level--; updateLevel(); loadProblem(); }
+});
+
+function updateLevel() {
+  document.getElementById('levelDisplay').textContent = level;
+}
+
+document.getElementById('submitBtn').addEventListener('click', checkAnswer);
+document.getElementById('answerInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') checkAnswer();
+});
+document.getElementById('nextBtn').addEventListener('click', loadProblem);
+
+function loadProblem() {
+  answered = false;
+  const gen = generators[activeTopic];
+  if (!gen) return;
+  currentProblem = gen(level);
+
+  const topicMeta = TOPICS.find(t => t.id === activeTopic);
+  document.getElementById('topicLabel').textContent = topicMeta ? topicMeta.label : '';
+  document.getElementById('problemHint').textContent = currentProblem.hint || '';
+  document.getElementById('feedback').textContent = '';
+  document.getElementById('feedback').className = 'feedback';
+
+  const input = document.getElementById('answerInput');
+  input.value = '';
+  input.className = 'answer-input';
+  input.disabled = false;
+  document.getElementById('submitBtn').disabled = false;
+
+  // Render math
+  const el = document.getElementById('problemText');
+  el.textContent = '';
+  try {
+    katex.render(currentProblem.display, el, { throwOnError: false, displayMode: false });
+  } catch(e) {
+    el.textContent = currentProblem.display;
+  }
+
+  input.focus();
+}
+
+function checkAnswer() {
+  if (answered || !currentProblem) return;
+  const input = document.getElementById('answerInput');
+  const userAns = input.value.trim();
+  if (!userAns) return;
+
+  const isCorrect = currentProblem.check(userAns, currentProblem.answer);
+  answered = true;
+  input.disabled = true;
+  document.getElementById('submitBtn').disabled = true;
+
+  const fb = document.getElementById('feedback');
+  if (isCorrect) {
+    correct++; streak++;
+    input.className = 'answer-input correct';
+    fb.textContent = '✓ Correct!';
+    fb.className = 'feedback correct';
+  } else {
+    wrong++; streak = 0;
+    input.className = 'answer-input wrong';
+    fb.textContent = `✗ Answer: ${currentProblem.answer}`;
+    fb.className = 'feedback wrong';
+  }
+
+  document.getElementById('scoreCorrect').textContent = correct;
+  document.getElementById('scoreWrong').textContent = wrong;
+  document.getElementById('scoreStreak').textContent = streak;
+}
+
+// Init
+loadProblem();
+</script>
+</body>
+</html>
