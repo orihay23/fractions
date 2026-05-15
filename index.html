@@ -53,6 +53,13 @@
   .katex-display { margin: 0; }
 
   .no-topic { text-align: center; color: #64748b; font-size: 1.1rem; margin: 40px; }
+
+  .tree-section { margin-top: 24px; padding-top: 20px; border-top: 1px solid #334155; text-align: center; }
+  .tree-progress { font-size: 0.78rem; color: #64748b; margin-bottom: 4px; letter-spacing: 0.04em; }
+  .tree-svg { width: 100%; max-width: 300px; display: block; margin: 0 auto; }
+  .tree-part { opacity: 0; transition: opacity 0.6s ease; }
+  .tree-part.visible { opacity: 1; }
+  .card.win-glow { border-color: #fbbf24 !important; box-shadow: 0 0 40px rgba(251,191,36,0.4), 0 4px 32px rgba(0,0,0,0.4); transition: border-color 0.5s, box-shadow 0.5s; }
 </style>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
@@ -85,6 +92,38 @@
     <button class="btn-next" id="nextBtn">Next Problem →</button>
     <div class="score-bar">
       Correct: <span id="scoreCorrect">0</span> &nbsp; Wrong: <span id="scoreWrong">0</span> &nbsp; Streak: <span id="scoreStreak">0</span>
+    </div>
+
+    <div class="tree-section">
+      <div class="tree-progress" id="treeProgress">🌱 0 / 10</div>
+      <svg viewBox="0 0 320 210" class="tree-svg">
+        <!-- grass -->
+        <ellipse cx="160" cy="206" rx="145" ry="8" fill="#14532d" opacity="0.55"/>
+        <!-- stage 1: trunk lower -->
+        <rect class="tree-part stage-1" x="152" y="162" width="16" height="44" fill="#92400e" rx="3"/>
+        <!-- stage 2: trunk upper -->
+        <rect class="tree-part stage-2" x="154" y="124" width="12" height="42" fill="#a16207" rx="2"/>
+        <!-- stage 3: left main branch -->
+        <line class="tree-part stage-3" x1="158" y1="145" x2="87" y2="105" stroke="#92400e" stroke-width="9" stroke-linecap="round"/>
+        <!-- stage 4: right main branch -->
+        <line class="tree-part stage-4" x1="162" y1="145" x2="233" y2="105" stroke="#92400e" stroke-width="9" stroke-linecap="round"/>
+        <!-- stage 5: left sub-branch -->
+        <line class="tree-part stage-5" x1="87" y1="105" x2="56" y2="72" stroke="#92400e" stroke-width="6" stroke-linecap="round"/>
+        <!-- stage 6: right sub-branch -->
+        <line class="tree-part stage-6" x1="233" y1="105" x2="264" y2="72" stroke="#92400e" stroke-width="6" stroke-linecap="round"/>
+        <!-- stage 7: left foliage -->
+        <circle class="tree-part stage-7" cx="72" cy="90" r="37" fill="#15803d"/>
+        <!-- stage 8: right foliage -->
+        <circle class="tree-part stage-8" cx="248" cy="90" r="37" fill="#166534"/>
+        <!-- stage 9: center foliage (on top) -->
+        <circle class="tree-part stage-9" cx="160" cy="64" r="53" fill="#22c55e"/>
+        <!-- stage 10: random fruits + win banner -->
+        <text class="tree-part stage-10 fruit-emoji" x="54"  y="80" font-size="22" text-anchor="middle">🍎</text>
+        <text class="tree-part stage-10 fruit-emoji" x="266" y="80" font-size="22" text-anchor="middle">🍎</text>
+        <text class="tree-part stage-10 fruit-emoji" x="128" y="42" font-size="22" text-anchor="middle">🍎</text>
+        <text class="tree-part stage-10 fruit-emoji" x="194" y="44" font-size="22" text-anchor="middle">🍎</text>
+        <text class="tree-part stage-10" x="160" y="18" font-size="12" text-anchor="middle" fill="#fbbf24" font-weight="700">🎉 You grew a tree! 🎉</text>
+      </svg>
     </div>
   </div>
 </div>
@@ -698,6 +737,11 @@ function checkAnswer() {
   const fb = document.getElementById('feedback');
   if (isCorrect) {
     correct++; streak++;
+    if (!treeResetting && treeScore < 10) {
+      treeScore++;
+      updateTree();
+      if (treeScore === 10) onTreeComplete();
+    }
     input.className = 'answer-input correct';
     fb.textContent = '✓ Correct!';
     fb.className = 'feedback correct';
@@ -712,6 +756,51 @@ function checkAnswer() {
   document.getElementById('scoreWrong').textContent = wrong;
   document.getElementById('scoreStreak').textContent = streak;
 }
+
+// ── Tree ─────────────────────────────────────────────────────────────────────
+const FRUIT_POOL = [
+  '🚀','🦄','🎸','👟','🌮','🍦','🤖','🦋','🐉','🦑',
+  '🎃','🍩','🎯','🦩','💎','🎺','🛸','🌈','🧁','🦊',
+  '🎪','🦀','🏆','🧲','🎻','🍕','🌵','🦁','🎠','🦞',
+  '🌊','🏄','🎡','🦚','🍄','🧸','🎨','🦜','🛹','🎲',
+  '🦩','🐬','🦋','🌺','🎭','🪄','🦊','🐙','🌟','🎠',
+];
+
+let treeScore = 0;
+let treeResetting = false;
+
+function pickFruits() {
+  const pool = [...FRUIT_POOL].sort(() => Math.random() - 0.5);
+  document.querySelectorAll('.fruit-emoji').forEach((el, i) => { el.textContent = pool[i] || '⭐'; });
+}
+
+function updateTree() {
+  for (let i = 1; i <= 10; i++) {
+    document.querySelectorAll(`.stage-${i}`).forEach(el =>
+      el.classList.toggle('visible', treeScore >= i)
+    );
+  }
+  document.getElementById('treeProgress').textContent =
+    treeScore >= 10 ? '🎉 Tree complete!' : `🌱 ${treeScore} / 10`;
+}
+
+function onTreeComplete() {
+  treeResetting = true;
+  document.getElementById('card').classList.add('win-glow');
+  setTimeout(() => {
+    document.getElementById('card').classList.remove('win-glow');
+    document.querySelectorAll('.tree-part').forEach(el => el.classList.remove('visible'));
+    setTimeout(() => {
+      treeScore = 0;
+      treeResetting = false;
+      pickFruits();
+      updateTree();
+    }, 700);
+  }, 3500);
+}
+
+pickFruits();
+updateTree();
 
 // Init
 loadProblem();
