@@ -55,11 +55,16 @@
   .no-topic { text-align: center; color: #64748b; font-size: 1.1rem; margin: 40px; }
 
   .tree-section { margin-top: 24px; padding-top: 20px; border-top: 1px solid #334155; text-align: center; }
-  .tree-progress { font-size: 0.78rem; color: #64748b; margin-bottom: 4px; letter-spacing: 0.04em; }
-  .tree-svg { width: 100%; max-width: 300px; display: block; margin: 0 auto; }
-  .tree-part { opacity: 0; transition: opacity 0.6s ease; }
+  .tree-progress { font-size: 0.78rem; color: #64748b; margin-bottom: 8px; letter-spacing: 0.04em; }
+  .tree-svg { width: 100%; max-width: 360px; display: block; margin: 0 auto; }
+  .tree-part { opacity: 0; transition: opacity 0.7s ease; }
   .tree-part.visible { opacity: 1; }
   .card.win-glow { border-color: #fbbf24 !important; box-shadow: 0 0 40px rgba(251,191,36,0.4), 0 4px 32px rgba(0,0,0,0.4); transition: border-color 0.5s, box-shadow 0.5s; }
+  .btn-new-game { background: transparent; border: 1.5px solid #334155; color: #64748b; border-radius: 8px; padding: 7px 18px; font-size: 0.8rem; cursor: pointer; transition: all 0.2s; margin-top: 10px; display: inline-block; }
+  .btn-new-game:hover { border-color: #94a3b8; color: #e2e8f0; }
+  .btn-new-game.ready { border-color: #fbbf24; color: #fbbf24; font-weight: 600; animation: pulse-gold 1.5s ease-in-out infinite; }
+  .btn-new-game.ready:hover { background: #fbbf24; color: #0f172a; animation: none; }
+  @keyframes pulse-gold { 0%,100%{box-shadow:0 0 0 0 rgba(251,191,36,0)} 50%{box-shadow:0 0 0 6px rgba(251,191,36,0.25)} }
 </style>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
@@ -96,34 +101,52 @@
 
     <div class="tree-section">
       <div class="tree-progress" id="treeProgress">🌱 0 / 10</div>
-      <svg viewBox="0 0 320 210" class="tree-svg">
-        <!-- grass -->
-        <ellipse cx="160" cy="206" rx="145" ry="8" fill="#14532d" opacity="0.55"/>
-        <!-- stage 1: trunk lower -->
-        <rect class="tree-part stage-1" x="152" y="162" width="16" height="44" fill="#92400e" rx="3"/>
-        <!-- stage 2: trunk upper -->
-        <rect class="tree-part stage-2" x="154" y="124" width="12" height="42" fill="#a16207" rx="2"/>
-        <!-- stage 3: left main branch -->
-        <line class="tree-part stage-3" x1="158" y1="145" x2="87" y2="105" stroke="#92400e" stroke-width="9" stroke-linecap="round"/>
-        <!-- stage 4: right main branch -->
-        <line class="tree-part stage-4" x1="162" y1="145" x2="233" y2="105" stroke="#92400e" stroke-width="9" stroke-linecap="round"/>
-        <!-- stage 5: left sub-branch -->
-        <line class="tree-part stage-5" x1="87" y1="105" x2="56" y2="72" stroke="#92400e" stroke-width="6" stroke-linecap="round"/>
-        <!-- stage 6: right sub-branch -->
-        <line class="tree-part stage-6" x1="233" y1="105" x2="264" y2="72" stroke="#92400e" stroke-width="6" stroke-linecap="round"/>
-        <!-- stage 7: left foliage -->
-        <circle class="tree-part stage-7" cx="72" cy="90" r="37" fill="#15803d"/>
-        <!-- stage 8: right foliage -->
-        <circle class="tree-part stage-8" cx="248" cy="90" r="37" fill="#166534"/>
-        <!-- stage 9: center foliage (on top) -->
-        <circle class="tree-part stage-9" cx="160" cy="64" r="53" fill="#22c55e"/>
-        <!-- stage 10: random fruits + win banner -->
-        <text class="tree-part stage-10 fruit-emoji" x="54"  y="80" font-size="22" text-anchor="middle">🍎</text>
-        <text class="tree-part stage-10 fruit-emoji" x="266" y="80" font-size="22" text-anchor="middle">🍎</text>
-        <text class="tree-part stage-10 fruit-emoji" x="128" y="42" font-size="22" text-anchor="middle">🍎</text>
-        <text class="tree-part stage-10 fruit-emoji" x="194" y="44" font-size="22" text-anchor="middle">🍎</text>
-        <text class="tree-part stage-10" x="160" y="18" font-size="12" text-anchor="middle" fill="#fbbf24" font-weight="700">🎉 You grew a tree! 🎉</text>
+      <svg viewBox="0 0 360 270" class="tree-svg">
+        <!-- win banner: stage 10, drawn first so it's behind fruit -->
+        <text class="tree-part stage-10" x="180" y="16" font-size="13" text-anchor="middle" fill="#fbbf24" font-weight="700">🎉 You grew a tree! 🎉</text>
+
+        <!-- stage 1: earthy ground mound -->
+        <ellipse class="tree-part stage-1" cx="180" cy="260" rx="132" ry="14" fill="#78350f"/>
+        <ellipse class="tree-part stage-1" cx="180" cy="255" rx="106" ry="9"  fill="#92400e"/>
+
+        <!-- stage 2: lower trunk — wide trapezoid with highlight stripe -->
+        <path class="tree-part stage-2" d="M 153 254 L 207 254 L 199 194 L 161 194 Z" fill="#6b3310"/>
+        <path class="tree-part stage-2" d="M 171 254 L 189 254 L 185 194 L 175 194 Z" fill="#a16207" opacity="0.55"/>
+
+        <!-- stage 3: upper trunk + fork stubs -->
+        <path class="tree-part stage-3" d="M 163 196 L 197 196 L 191 162 L 169 162 Z" fill="#7c3d12"/>
+        <path class="tree-part stage-3" d="M 171 168 Q 153 158 135 148" stroke="#7c3d12" stroke-width="10" fill="none" stroke-linecap="round"/>
+        <path class="tree-part stage-3" d="M 189 168 Q 207 158 225 148" stroke="#7c3d12" stroke-width="10" fill="none" stroke-linecap="round"/>
+
+        <!-- stage 4: left branch sweeps wide -->
+        <path class="tree-part stage-4" d="M 136 150 Q 100 138 66 118" stroke="#7c3d12" stroke-width="16" fill="none" stroke-linecap="round"/>
+        <path class="tree-part stage-4" d="M 66 118 Q 52 108 42 96"    stroke="#7c3d12" stroke-width="9"  fill="none" stroke-linecap="round"/>
+
+        <!-- stage 5: right branch sweeps wide -->
+        <path class="tree-part stage-5" d="M 224 150 Q 260 138 294 118" stroke="#7c3d12" stroke-width="16" fill="none" stroke-linecap="round"/>
+        <path class="tree-part stage-5" d="M 294 118 Q 308 108 318 96"  stroke="#7c3d12" stroke-width="9"  fill="none" stroke-linecap="round"/>
+
+        <!-- stage 6: dark back foliage silhouette (behind everything else) -->
+        <ellipse class="tree-part stage-6" cx="180" cy="118" rx="114" ry="90" fill="#14532d"/>
+
+        <!-- stage 7: left foliage cluster -->
+        <ellipse class="tree-part stage-7" cx="96"  cy="110" rx="72" ry="66" fill="#15803d"/>
+
+        <!-- stage 8: right foliage cluster -->
+        <ellipse class="tree-part stage-8" cx="264" cy="110" rx="72" ry="66" fill="#166534"/>
+
+        <!-- stage 9: bright front canopy — two ellipses for roundness -->
+        <ellipse class="tree-part stage-9" cx="180" cy="96"  rx="92" ry="82" fill="#22c55e"/>
+        <ellipse class="tree-part stage-9" cx="178" cy="72"  rx="56" ry="46" fill="#4ade80"/>
+
+        <!-- stage 10: 5 large random fruits -->
+        <text class="tree-part stage-10 fruit-emoji" x="180" y="58"  font-size="30" text-anchor="middle">🍎</text>
+        <text class="tree-part stage-10 fruit-emoji" x="88"  y="100" font-size="27" text-anchor="middle">🍎</text>
+        <text class="tree-part stage-10 fruit-emoji" x="272" y="100" font-size="27" text-anchor="middle">🍎</text>
+        <text class="tree-part stage-10 fruit-emoji" x="130" y="142" font-size="25" text-anchor="middle">🍎</text>
+        <text class="tree-part stage-10 fruit-emoji" x="230" y="142" font-size="25" text-anchor="middle">🍎</text>
       </svg>
+      <button class="btn-new-game" id="newGameBtn">New Game</button>
     </div>
   </div>
 </div>
@@ -737,7 +760,7 @@ function checkAnswer() {
   const fb = document.getElementById('feedback');
   if (isCorrect) {
     correct++; streak++;
-    if (!treeResetting && treeScore < 10) {
+    if (treeScore < 10) {
       treeScore++;
       updateTree();
       if (treeScore === 10) onTreeComplete();
@@ -763,11 +786,10 @@ const FRUIT_POOL = [
   '🎃','🍩','🎯','🦩','💎','🎺','🛸','🌈','🧁','🦊',
   '🎪','🦀','🏆','🧲','🎻','🍕','🌵','🦁','🎠','🦞',
   '🌊','🏄','🎡','🦚','🍄','🧸','🎨','🦜','🛹','🎲',
-  '🦩','🐬','🦋','🌺','🎭','🪄','🦊','🐙','🌟','🎠',
+  '🐬','🌺','🎭','🪄','🐙','🌟','🦈','🦩','🎯','🧨',
 ];
 
 let treeScore = 0;
-let treeResetting = false;
 
 function pickFruits() {
   const pool = [...FRUIT_POOL].sort(() => Math.random() - 0.5);
@@ -785,19 +807,17 @@ function updateTree() {
 }
 
 function onTreeComplete() {
-  treeResetting = true;
   document.getElementById('card').classList.add('win-glow');
-  setTimeout(() => {
-    document.getElementById('card').classList.remove('win-glow');
-    document.querySelectorAll('.tree-part').forEach(el => el.classList.remove('visible'));
-    setTimeout(() => {
-      treeScore = 0;
-      treeResetting = false;
-      pickFruits();
-      updateTree();
-    }, 700);
-  }, 3500);
+  document.getElementById('newGameBtn').classList.add('ready');
 }
+
+document.getElementById('newGameBtn').addEventListener('click', () => {
+  treeScore = 0;
+  document.getElementById('card').classList.remove('win-glow');
+  document.getElementById('newGameBtn').classList.remove('ready');
+  pickFruits();
+  updateTree();
+});
 
 pickFruits();
 updateTree();
